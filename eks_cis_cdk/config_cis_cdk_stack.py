@@ -5,8 +5,9 @@ from aws_cdk import (
     aws_iam as _iam,
     aws_eks as eks,
     aws_sqs as sqs,
+    aws_kms as kms,
     Duration,
-    Stack
+    Stack,
 )
 from aws_cdk.aws_lambda_event_sources import SqsEventSource
 from lambda_configs import lambdas as lambdas
@@ -51,12 +52,14 @@ class lambdaStack(Stack):
         id: str,
         eks_lambda_role: _iam.Role,
         eks_cluster: eks.Cluster,
-        trusted_registries:str,
+        trusted_registries: str,
         **kwargs
     ) -> None:
         super().__init__(scope, id, **kwargs)
         target_clusters = eks_cluster
         trusted_registries = trusted_registries
+
+
 
         ################## IAM Role for SQS Queue Lambda ############################################################
 
@@ -90,13 +93,27 @@ class lambdaStack(Stack):
         )
 
         ################## SQS Queue ############################################################
+        """KMS Key for SQS Queue"""
+        sqs_kms = kms.Key(self,"sqs-kms-key",enable_key_rotation=True)
 
+        """Dead Letter Queue for Security Hub findings"""
+        sqs_dlq = sqs.Queue(
+            self, "sechub-dl-queue", 
+            queue_name="sec-hub-deadletter-queue",
+            encryption=sqs.QueueEncryption.KMS,
+            encryption_master_key=sqs_kms
+        )
+
+        """Queue for distributing findings to Security Hub"""
         sqs_queue = sqs.Queue(
             self,
             "sechub-sqs-queue",
             visibility_timeout=Duration.seconds(300),
             queue_name="sec-hub-findings-sqs",
             receive_message_wait_time=Duration.seconds(20),
+            dead_letter_queue=sqs.DeadLetterQueue(max_receive_count=10, queue=sqs_dlq),
+            encryption=sqs.QueueEncryption.KMS,
+            encryption_master_key=sqs_kms,
         )
         sqs_pol_consume = sqs_queue.grant_consume_messages(lambda_role)
         sqs_pol_send = sqs_queue.add_to_resource_policy(
@@ -108,6 +125,7 @@ class lambdaStack(Stack):
             )
         )
 
+        """Lambda that puts security hub findings"""
         sqs_lambda = lambda_.Function(
             self,
             "sqs-sec-hub-lambda",
@@ -130,6 +148,8 @@ class lambdaStack(Stack):
                 sqs_queue, batch_size=10, max_batching_window=Duration.minutes(5)
             )
         )
+
+
 
         ################## kubernetes Lambda Layer ############################################################
 
