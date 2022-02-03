@@ -17,7 +17,7 @@ This project creates an EKS cluster using the AWS Cloud Development Kit (AWS CDK
 * [AWS SecurityHub should be enabled](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-settingup.html) in the target region.
 
 # Product versions
-* AWS CDK 1.130.0 or later.
+* AWS CDK 2.8.0 or later.
 * Node v16.13.0 or later.
 * NPM Version 8.1.0 or later.
 
