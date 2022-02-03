@@ -20,6 +20,7 @@ This project creates an EKS cluster using the AWS Cloud Development Kit (AWS CDK
 * AWS CDK 2.8.0 or later.
 * Node v16.13.0 or later.
 * NPM Version 8.1.0 or later.
+* Python 3.9
 
 Resources: https://medium.com/geekculture/deploying-aws-lambda-layers-with-python-8b15e24bdad2 
 https://www.infinitypp.com/amazon-aws/writing-custom-aws-config-rules-using-lambda/
@@ -67,7 +68,7 @@ $ cdk synth
 ```
 Bootstrap CDK into the target account.
 ```
-$ cdk bootstrap aws://targetaccount-it/region e.g. cdk bootstrap aws://123456789101/us-east-1
+$ cdk bootstrap 
 ```
 
 To add additional dependencies, for example other CDK libraries, just add
