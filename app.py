@@ -3,8 +3,6 @@
 from aws_cdk import App, Aspects
 from eks_cis_cdk.eks_cis_cdk_stack import CdkConfigEksStack
 from eks_cis_cdk.config_cis_cdk_stack import lambdaStack
-from cdk_nag import AwsSolutionsChecks, NagSuppressions
-from cdknagexemptions import config_rules_by_path as nag_exemptions
 
 # from config_cis_cdk.eks_cis_cdk_stack import lambdaStack
 # from eks_cis_cdk.eks_test_stack import lambdaTestStack
@@ -29,15 +27,4 @@ config_stack = lambdaStack(
     trusted_registries=trusted_registries,
 )
 
-# See cdknagexemptions.py for exemption configuration
-for exemption in nag_exemptions:
-    stack = nag_exemptions["Rules"][exemption]["stack"]
-    path = nag_exemptions["Rules"][exemption]["path"]
-    rule = nag_exemptions["Rules"][exemption]["path"]
-    NagSuppressions.add_stack_suppression_by_path(stack,path,rule)
-
-
-Aspects.of(app).add(AwsSolutionsChecks())
 app.synth()
-
-
