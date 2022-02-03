@@ -1,7 +1,7 @@
 
 # Welcome to EKS Config rules with AWS CDK 
 
-This project creates an EKS cluster using the AWS Cloud Development Kit (AWS CDK) and five AWS Config custom rules to detect EKS resources miconfigurations according to [Center for Internet Security (CIS) benchmark for Amazon Elastic Kubernetes Service (EKS)](https://aws.amazon.com/blogs/containers/introducing-cis-amazon-eks-benchmark/).
+This project creates an example EKS cluster using the AWS Cloud Development Kit (AWS CDK) and five AWS Config custom rules to detect EKS resources misconfigurations according to [Center for Internet Security (CIS) benchmark for Amazon Elastic Kubernetes Service (EKS)](https://aws.amazon.com/blogs/containers/introducing-cis-amazon-eks-benchmark/). The cluster is intended to be used as an example cluster, with intentionally misconfigured resources to validate a subset of misconfigured Kubernetes resources and the triggering of AWS Config rules by these rules.
 
 # Prerequisites
 
@@ -118,9 +118,31 @@ class lambdaStack(core.Stack):
     ) -> None:
         super().__init__(scope, id, **kwargs)
         target_clusters = eks_cluster
-        trusted_registries = "602401143452.dkr.ecr.us-east-1.amazonaws.com,busybox"
+        trusted_registries = "1111111111111.dkr.ecr.us-east-1.amazonaws.com,busybox"
 
 From here we can modify the target clusters, we can also update the list of trusted container registries that we permit. In the provided example our target cluster is the sample cluster that we create with the CDK example, which is passed to the target_clusters variable as `eks_cluster`
+
+# Connecting to our cluster
+The creation of the EKS Stack (eks_stack) provides outputs to use to to connect to the cluster:
+```
+eksconfigexample.pocGetTokenCommand
+```
+
+We can run this command to get the token to connect to the cluster(for example):
+```
+$aws eks get-token --cluster-name secaod-poc-eks-cluster --region us-east-1 --role-arn arn:aws:iam::111111111111:role/eks-cluster-role
+```
+
+and then the output of eksconfigexample.pocConfigCommand to add the credentials to the kubeconfig file:
+
+```
+aws eks update-kubeconfig --name secaod-poc-eks-cluster --region us-east-1 --role-arn arn:aws:iam::111111111111:role/eks-cluster-role
+```
+
+Validate access to the cluster:
+```
+kubectl get nodes
+```
 
 # Examples
 Examples are provided in the examples folder to bring the state of the rules that have currently been created into compliance. 
