@@ -1,3 +1,4 @@
+from socket import timeout
 from constructs import Construct
 from aws_cdk import (
     aws_config as config,
@@ -6,11 +7,14 @@ from aws_cdk import (
     aws_eks as eks,
     aws_sqs as sqs,
     aws_kms as kms,
+    triggers as triggers,
     Duration,
     Stack,
 )
 from aws_cdk.aws_lambda_event_sources import SqsEventSource
 from lambda_configs import lambdas as lambdas
+import os
+import aws_cdk as cdk
 
 
 """Dictionary that defines the lambdas being created"""
@@ -200,3 +204,42 @@ class lambdaStack(Stack):
                 maximum_execution_frequency=config.MaximumExecutionFrequency.ONE_HOUR,
                 input_parameters=input_parameters,
             )
+
+        ################## Lambda to evalute config rules #########################
+        # -------------------------------------------------------------------------------------
+        # Create IAM role for lambda invocation, write to X-Ray and Get and Put objects into s3
+        # -------------------------------------------------------------------------------------
+        ConfigLambdaRole=_iam.Role(self, "Lambda-role",
+                        assumed_by=_iam.ServicePrincipal("lambda.amazonaws.com")
+                    )
+
+        ConfigLambdaRole.add_to_policy(_iam.PolicyStatement(
+            effect=_iam.Effect.ALLOW,
+            resources= "*",
+            actions= [
+                        "config:DescribeConfigRules",
+                        "config:StartConfigRulesEvaluation"
+                    ]
+        ))
+
+        # -------------------------------------------
+        # Create Lambda Function
+        # -------------------------------------------
+        # CheckConfig_lambda = lambda_.Function(
+        #         self,
+        #         id = 'CheckConfig',
+        #         function_name='CheckConfig',
+        #         code=lambda_.Code.from_asset(os.path.join(os.getcwd(), "../lambda_config_evaluation")),
+        #         runtime= lambda_.Runtime.PYTHON_3_8,
+        #         handler="lambda_config_evaluation.lambda_handler",
+        #         role=ConfigLambdaRole,
+        #         timeout=cdk.Duration.minutes(3)
+        # )
+
+        triggers.CheckConfig_lambda(self, "MyTrigger",
+            runtime=lambda_.Runtime.PYTHON_3_8,
+            handler="lambda_config_evaluation.handler",
+            code=lambda_.Code.from_asset(os.path.join(os.getcwd(), "../lambda_config_evaluation")),
+            timeout=cdk.Duration.minutes(3),
+            retry_attempts=2
+        )
