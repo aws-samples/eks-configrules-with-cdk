@@ -248,7 +248,6 @@ class lambdaStack(Stack):
             handler=CheckConfig_lambda,
 
             # the properties below are optional
-            #execute_after=[construct],
-
+            execute_after=[lambda_configRule],
             execute_on_handler_change=False
         )
