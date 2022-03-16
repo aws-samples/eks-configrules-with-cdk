@@ -215,7 +215,7 @@ class lambdaStack(Stack):
 
         ConfigLambdaRole.add_to_policy(_iam.PolicyStatement(
             effect=_iam.Effect.ALLOW,
-            resources= "*",
+            resources= ["*"],
             actions= [
                         "config:DescribeConfigRules",
                         "config:StartConfigRulesEvaluation"
@@ -225,21 +225,30 @@ class lambdaStack(Stack):
         # -------------------------------------------
         # Create Lambda Function
         # -------------------------------------------
-        # CheckConfig_lambda = lambda_.Function(
-        #         self,
-        #         id = 'CheckConfig',
-        #         function_name='CheckConfig',
-        #         code=lambda_.Code.from_asset(os.path.join(os.getcwd(), "../lambda_config_evaluation")),
-        #         runtime= lambda_.Runtime.PYTHON_3_8,
-        #         handler="lambda_config_evaluation.lambda_handler",
-        #         role=ConfigLambdaRole,
-        #         timeout=cdk.Duration.minutes(3)
+        CheckConfig_lambda = lambda_.Function(
+                self,
+                id = 'CheckConfig',
+                function_name='CheckConfig',
+                code=lambda_.Code.from_asset('resources/lambda_config_evaluation'),
+                runtime= lambda_.Runtime.PYTHON_3_9,
+                handler="lambda_config_evaluation.lambda_handler",
+                role=ConfigLambdaRole,
+                timeout=cdk.Duration.minutes(3)
+        )
+
+        # triggers.CheckConfig_lambda(self, "MyTrigger",
+        #     runtime=lambda_.Runtime.PYTHON_3_9,
+        #     handler="lambda_config_evaluation.handler",
+        #     code=lambda_.Code.from_asset('resources/lambda_config_evaluation'),
+        #     timeout=cdk.Duration.minutes(3),
+        #     retry_attempts=2
         # )
 
-        triggers.CheckConfig_lambda(self, "MyTrigger",
-            runtime=lambda_.Runtime.PYTHON_3_8,
-            handler="lambda_config_evaluation.handler",
-            code=lambda_.Code.from_asset(os.path.join(os.getcwd(), "../lambda_config_evaluation")),
-            timeout=cdk.Duration.minutes(3),
-            retry_attempts=2
+        trigger = triggers.Trigger(self, "CheckConfig_lambda",
+            handler=CheckConfig_lambda,
+
+            # the properties below are optional
+            #execute_after=[construct],
+
+            execute_on_handler_change=False
         )
