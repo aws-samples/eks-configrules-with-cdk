@@ -1,7 +1,9 @@
 
 # Welcome to EKS Config rules with AWS CDK 
 
-This project creates an example EKS cluster using the AWS Cloud Development Kit (AWS CDK) and five AWS Config custom rules to detect EKS resources misconfigurations according to [Center for Internet Security (CIS) benchmark for Amazon Elastic Kubernetes Service (EKS)](https://aws.amazon.com/blogs/containers/introducing-cis-amazon-eks-benchmark/). The cluster is intended to be used as an example cluster, with intentionally misconfigured resources to validate a subset of misconfigured Kubernetes resources and the triggering of AWS Config rules by these rules.
+This project creates an EKS cluster using the AWS Cloud Development Kit (AWS CDK) and five AWS Config custom rules to detect EKS resources miconfigurations according to [Center for Internet Security (CIS) benchmark for Amazon Elastic Kubernetes Service (EKS)](https://aws.amazon.com/blogs/containers/introducing-cis-amazon-eks-benchmark/).
+
+Important: This application uses various AWS services and there are costs associated with these services after the Free Tier usage - please see the [AWS Pricing page](https://aws.amazon.com/pricing/) for details. You are responsible for any AWS costs incurred. No warranty is implied in this example.
 
 # Prerequisites
 
@@ -17,10 +19,9 @@ This project creates an example EKS cluster using the AWS Cloud Development Kit 
 * [AWS SecurityHub should be enabled](https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-settingup.html) in the target region.
 
 # Product versions
-* AWS CDK 2.8.0 or later.
+* AWS CDK 1.130.0 or later.
 * Node v16.13.0 or later.
 * NPM Version 8.1.0 or later.
-* Python 3.9
 
 Resources: https://medium.com/geekculture/deploying-aws-lambda-layers-with-python-8b15e24bdad2 
 https://www.infinitypp.com/amazon-aws/writing-custom-aws-config-rules-using-lambda/
@@ -37,14 +38,14 @@ you can create the virtualenv manually.
 To manually create a virtualenv on MacOS and Linux:
 
 ```
-$ python3 -m venv .venv
+python3 -m venv .venv
 ```
 
 After the init process completes and the virtualenv is created, you can use the following
 step to activate your virtualenv.
 
 ```
-$ source .venv/bin/activate
+source .venv/bin/activate
 ```
 
 If you are a Windows platform, you would activate the virtualenv like this:
@@ -56,19 +57,20 @@ If you are a Windows platform, you would activate the virtualenv like this:
 Once the virtualenv is activated, you can install the required dependencies.
 
 ```
-$ pip install -r requirements.txt
-$ pip install -r layer-requirements.txt --target=resources/kubernetes_layer/python/lib/python3.9/site-packages
+pip install -r requirements.txt
+pip install -r layer-requirements.txt --target=resources/kubernetes_layer/python/lib/python3.9/site-packages
+pip install aws-cdk.triggers
 ```
 Modify the eks_admin_rolename variable in the app.py file to be the name of the Admin role in your AWS account, this is typically 'Admin'
 
 At this point you can now synthesize the CloudFormation template for this code.
 
 ```
-$ cdk synth
+cdk synth
 ```
 Bootstrap CDK into the target account.
 ```
-$ cdk bootstrap 
+cdk bootstrap aws://targetaccount-it/region e.g. cdk bootstrap aws://123456789101/us-east-1
 ```
 
 To add additional dependencies, for example other CDK libraries, just add
@@ -118,31 +120,9 @@ class lambdaStack(core.Stack):
     ) -> None:
         super().__init__(scope, id, **kwargs)
         target_clusters = eks_cluster
-        trusted_registries = "1111111111111.dkr.ecr.us-east-1.amazonaws.com,busybox"
+        trusted_registries = "602401143452.dkr.ecr.us-east-1.amazonaws.com,busybox"
 
 From here we can modify the target clusters, we can also update the list of trusted container registries that we permit. In the provided example our target cluster is the sample cluster that we create with the CDK example, which is passed to the target_clusters variable as `eks_cluster`
-
-# Connecting to our cluster
-The creation of the EKS Stack (eks_stack) provides outputs to use to to connect to the cluster:
-```
-eksconfigexample.pocGetTokenCommand
-```
-
-We can run this command to get the token to connect to the cluster(for example):
-```
-$aws eks get-token --cluster-name secaod-poc-eks-cluster --region us-east-1 --role-arn arn:aws:iam::111111111111:role/eks-cluster-role
-```
-
-and then the output of eksconfigexample.pocConfigCommand to add the credentials to the kubeconfig file:
-
-```
-aws eks update-kubeconfig --name secaod-poc-eks-cluster --region us-east-1 --role-arn arn:aws:iam::111111111111:role/eks-cluster-role
-```
-
-Validate access to the cluster:
-```
-kubectl get nodes
-```
 
 # Examples
 Examples are provided in the examples folder to bring the state of the rules that have currently been created into compliance. 
@@ -150,7 +130,7 @@ Examples are provided in the examples folder to bring the state of the rules tha
 # Clearing up
 To remove the resources created by CDK we can run 
 ```
-$ cdk destroy --all
+cdk destroy --all
 ```
 ## Security
 
